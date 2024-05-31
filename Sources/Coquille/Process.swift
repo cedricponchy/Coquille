@@ -36,10 +36,12 @@ public class Process {
     public struct Command {
         public let name: String
         public let arguments: [String]
+        public let environment: [String : String]?
 
-        public init(_ name: String, arguments: [String]) {
+        public init(_ name: String, arguments: [String], environment: [String : String]? = nil) {
             self.name = name
             self.arguments = arguments
+            self.environment = environment
         }
     }
 
@@ -50,6 +52,8 @@ public class Process {
     }
 
     let arguments: [String]
+    
+    let environment: [String : String]?
 
     public let stdout: Output?
     public let stderr: Output?
@@ -58,50 +62,58 @@ public class Process {
 
     public init(command: Command) {
         self.arguments = [command.name] + command.arguments
+        self.environment = command.environment
         self.stdout = nil
         self.stderr = nil
     }
 
     public init(command: Command, printStdout: Bool = false, printStderr: Bool = false) {
         self.arguments = [command.name] + command.arguments
+        self.environment = command.environment
         self.stdout = printStdout ? .stdout : nil
         self.stderr = printStderr ? .stderr : nil
     }
 
     public init(command: Command, stdout: OutputHandler? = nil) {
         self.arguments = [command.name] + command.arguments
+        self.environment = command.environment
         self.stdout = stdout.map { .handler($0) }
         self.stderr = nil
     }
 
     public init(command: Command, stdout: OutputHandler? = nil, stderr: OutputHandler? = nil) {
         self.arguments = [command.name] + command.arguments
+        self.environment = command.environment
         self.stdout = stdout.map { .handler($0) }
         self.stderr = stderr.map { .handler($0) }
     }
 
     // MARK: - Convenience Initializers
 
-    public init(commandString: String) {
+    public init(commandString: String, environment: [String : String]? = nil) {
         self.arguments = commandString.components(separatedBy: " ")
+        self.environment = environment
         self.stdout = nil
         self.stderr = nil
     }
 
-    public init(commandString: String, printStdout: Bool = false, printStderr: Bool = false) {
+    public init(commandString: String, printStdout: Bool = false, printStderr: Bool = false, environment: [String : String]? = nil) {
         self.arguments = commandString.components(separatedBy: " ")
+        self.environment = environment
         self.stdout = printStdout ? .stdout : nil
         self.stderr = printStderr ? .stderr : nil
     }
 
-    public init(commandString: String, stdout: OutputHandler? = nil) {
+    public init(commandString: String, stdout: OutputHandler? = nil, environment: [String : String]? = nil) {
         self.arguments = commandString.components(separatedBy: " ")
+        self.environment = environment
         self.stdout = stdout.map { .handler($0) }
         self.stderr = nil
     }
 
-    public init(commandString: String, stdout: OutputHandler? = nil, stderr: OutputHandler? = nil) {
+    public init(commandString: String, stdout: OutputHandler? = nil, stderr: OutputHandler? = nil, environment: [String : String]? = nil) {
         self.arguments = commandString.components(separatedBy: " ")
+        self.environment = environment
         self.stdout = stdout.map { .handler($0) }
         self.stderr = stderr.map { .handler($0) }
     }
@@ -145,6 +157,7 @@ public class Process {
         let _process = Foundation.Process()
         _process.launchPath = "/usr/bin/env"
         _process.arguments = arguments
+        _process.environment = environment ?? [:]
 
         let stdoutPipe = Pipe()
         _process.standardOutput = stdoutPipe
